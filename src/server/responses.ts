@@ -6,6 +6,7 @@ import {
 } from "../config";
 import { parseRequest } from "../responses/parser";
 import { buildCompactV1Output, COMPACT_PROMPT, decodeCompactionSummary, extractCompactUserMessages } from "../responses/compaction";
+import { compressRoutedCompaction } from "../responses/llmlingua2-sidecar";
 import { FORWARD_HEADERS } from "../adapters/openai-responses";
 import { expandPreviousResponseInput, previousResponseConversationId, rememberResponseState } from "../responses/state";
 import { routeModel } from "../router";
@@ -639,6 +640,8 @@ export async function handleResponses(
   // sidecar — and the bridge appends the synthetic compaction item (src/responses/compaction.ts).
   const routedCompaction = parsed._compactionRequest === true && !("passthrough" in adapter && adapter.passthrough);
   if (routedCompaction) {
+    // Optional local LLMLingua-2 preprocessing of old prose tool outputs; failure is nonfatal.
+    await compressRoutedCompaction(parsed);
     delete parsed.context.tools;
     delete parsed._webSearch;
     delete parsed.options.toolChoice;
