@@ -67,6 +67,8 @@ export async function compressRoutedCompaction(
     const message = messages[i];
     const original = toolResultText(message);
     if (original === null || !eligibleForLossyCompression(original)) continue;
+    // Cap synchronous compaction overhead even for a very long agent history.
+    if (stats.eligible >= 3) break;
     stats.eligible++;
     try {
       const response = await fetcher(endpoint, {
